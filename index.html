@@ -26,6 +26,20 @@
 .session-locked input,.session-locked button:not(#backWorkoutBtn),.session-locked textarea{pointer-events:none;opacity:.55}
 .session-locked .timer-controls{opacity:.4;pointer-events:none}
 .big-check{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}
+
+.block-selector{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}
+.block-selector button{padding:11px 4px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:700;font-size:13px}
+.block-selector button.active{background:#fff;color:#000;border-color:#fff}
+.calendar{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.calday{min-height:58px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 2px}
+.calday span{font-weight:800;font-size:15px;line-height:1}
+.calday small{font-size:9px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+.calday.done{background:#2a2a2a;border-color:#444}
+.calday.done small{color:#cfcfcf}
+.calday.rest{background:#151515;border-style:dashed}
+.calday.selected{outline:2px solid #fff;outline-offset:1px}
+.calday.locked{opacity:.35}
+.calday:disabled{cursor:not-allowed}
 </style>
 </head>
 <body class="intro-active">
@@ -46,7 +60,7 @@
   <h2 id="workoutTitle">Día 1 — Base y técnica</h2><p id="workoutDesc"></p>
   <div class="hero-meta"><div class="meta"><span>DURACIÓN</span><strong id="duration">40–45 min</strong></div><div class="meta"><span>ENFOQUE</span><strong id="focus">Técnica</strong></div><div class="meta"><span>DESCANSO</span><strong id="restRange">60–90 s</strong></div></div>
  </section>
- <section class="panel" style="padding-top:8px;padding-bottom:16px"><button class="btn primary" id="startSessionBtn" style="width:100%;font-size:16px;padding:16px 18px">Empezar entrenamiento →</button></section>
+ <section class="panel" style="padding-top:8px;padding-bottom:16px"><button class="btn primary" id="startSessionBtn" style="width:100%;padding:12px 16px">Empezar entrenamiento →</button></section>
 </section>
 <section id="sessionView" class="hidden">
  <section class="panel"><div class="between"><div><div class="eyebrow">Entrenamiento del día</div><h2 style="margin-top:5px">Tu sesión</h2></div><button class="btn small" id="backWorkoutBtn">← Volver</button></div></section>
@@ -58,9 +72,7 @@
   <div class="between" style="margin-top:12px"><label class="note"><input type="checkbox" id="autoRest" checked> Descanso automático de 30 s al marcar una serie</label><button class="btn small" id="timerReset">Reiniciar</button></div>
  </section>
  <section class="panel">
-  <div class="sectionhead"><div><div class="eyebrow">Registro del día</div><h2>Notas rápidas</h2></div><span class="note">Guardado automático</span></div>
-  <label class="note" for="dayNotes">Sensaciones, ajustes o molestias</label><textarea class="field" id="dayNotes" rows="3" placeholder="¿Cómo te has encontrado hoy?" style="margin-top:7px;resize:vertical"></textarea>
-  <div class="between" style="margin-top:12px"><button class="btn danger" id="resetDay">Reiniciar día</button><button class="btn primary" id="completeDay">Completar sesión</button></div>
+  <div class="between"><button class="btn danger" id="resetDay">Reiniciar día</button><button class="btn primary" id="completeDay">Finalizar entreno</button></div>
   <p class="note" id="completionHint" style="margin:9px 0 0">Completa las series registradas para cerrar el día.</p>
  </section>
 </section>
@@ -174,7 +186,7 @@ const content=$('sessionContent');content.innerHTML='<div class="empty">Preparan
     paintTimer();
   }
  }
- $('dayNotes').value=dayData().notes||'';const isCompleted=state.completedDays.includes(selectedDay);$('sessionPanel').classList.toggle('session-locked',isCompleted);$('dayNotes').readOnly=isCompleted;$('resetDay').disabled=isCompleted;const completed=state.completedDays.includes(selectedDay);if(!d){$('completeDay').textContent=completed?'Completada ✓':(rest?'Marcar descanso hecho':'Completar sesión');$('completeDay').disabled=!(rest||isTestDay(selectedDay));}else if(completed){$('completeDay').textContent='Entreno finalizado ✓';$('completeDay').disabled=true;}
+ /* notes removed */const isCompleted=state.completedDays.includes(selectedDay);$('sessionPanel').classList.toggle('session-locked',isCompleted);/* notes removed */$('resetDay').disabled=isCompleted;const completed=state.completedDays.includes(selectedDay);if(!d){$('completeDay').textContent=completed?'Completada ✓':(rest?'Marcar descanso hecho':'Completar sesión');$('completeDay').disabled=!(rest||isTestDay(selectedDay));}else if(completed){$('completeDay').textContent='Entreno finalizado ✓';$('completeDay').disabled=true;}
 }
 function getCalendarBlock(forDay){
   if(forDay<=30)return 1;
@@ -218,7 +230,7 @@ $('startSessionBtn').addEventListener('click',()=>showTab('session'));$('backWor
 $('weekPicker').addEventListener('click',e=>{const b=e.target.closest('[data-week-day]');if(b)selectDay(b.dataset.weekDay);});$('calendarGrid').addEventListener('click',e=>{const blk=e.target.closest('[data-block]');if(blk){calendarBlock=Number(blk.dataset.block);window._calManual=true;renderCalendar();return;}const b=e.target.closest('[data-cal-day]');if(b)selectDay(b.dataset.calDay);});$('calendarJump').addEventListener('click',()=>showTab('calendar'));$('todayBtn').addEventListener('click',()=>{if(!state.startDate){state.startDate=localISODate();save();selectDay(1);toast('Hoy queda fijado como día 1.');return;}const start=new Date(`${state.startDate}T00:00:00`);const elapsed=Math.floor((new Date().setHours(0,0,0,0)-start.getTime())/86400000)+1;selectDay(clamp(elapsed,1,100));});
 $('sessionContent').addEventListener('change',e=>{const done=e.target.closest('[data-done]');if(done){const key=done.dataset.done,s=Number(done.dataset.set),log=dayData().exercises[key]||(dayData().exercises[key]={sets:[]});log.sets=log.sets||[];log.sets[s]=log.sets[s]||{};log.sets[s].done=done.checked;if(done.checked){if(state.autoRest!==false){const nextTask=sessionTasks(getPlan(selectedDay)).find(t=>!(dayData().exercises[exerciseKey(t.e,t.index)]?.sets?.[t.round]?.done)); if(nextTask && nextTask.e.unit==='sec'){startTimer(Number(nextTask.e.target)||30, true);} else startTimer(30, false);}const valueInput=[...document.querySelectorAll('[data-value]')].find(el=>el.dataset.value===key&&Number(el.dataset.set)===s);if(valueInput)log.sets[s].value=Number(valueInput.value)||0;}if(!done.checked){const counts=countSession(selectedDay);if(counts.done<counts.total)state.completedDays=state.completedDays.filter(n=>n!==selectedDay);}save();renderWorkout();renderStats();return;}const val=e.target.closest('[data-value]');if(val){const key=val.dataset.value,s=Number(val.dataset.set),log=dayData().exercises[key]||(dayData().exercises[key]={sets:[]});log.sets=log.sets||[];log.sets[s]=log.sets[s]||{};log.sets[s].value=clamp(Number(val.value)||0,0,999);save();renderStats();}});
 $('sessionContent').addEventListener('input',e=>{const load=e.target.closest('[data-load]');if(load){const log=dayData().exercises[load.dataset.load]||(dayData().exercises[load.dataset.load]={sets:[]});log.load=load.value;save();renderStats();}});
-$('dayNotes').addEventListener('input',e=>{dayData().notes=e.target.value;save();});
+/* notes removed */
 $('completeDay').addEventListener('click',()=>{const d=getPlan(selectedDay);if(state.completedDays.includes(selectedDay)){toast('Esta sesión ya está finalizada y no se puede reabrir.');return;}if(!d&&!isRest(selectedDay)&&!isTestDay(selectedDay))return;const c=d?countSession(selectedDay):{done:0,total:0};if(c.done<c.total){toast(`Completa las ${c.total-c.done} series pendientes antes de cerrar.`);return;}if(!state.completedDays.includes(selectedDay))state.completedDays.push(selectedDay);save();renderAll();toast('Sesión completada. Buen trabajo.');});
 $('resetDay').addEventListener('click',()=>{if(state.completedDays.includes(selectedDay)){toast('No se puede reiniciar un día ya finalizado.');return;}if(!confirm(`¿Reiniciar los registros del día ${selectedDay}?`))return;state.days[selectedDay]={exercises:{},notes:''};save();renderAll();toast('Día reiniciado.');});
 $('exportBtn').addEventListener('click',()=>{const payload={app:'HOME CROSSFIT 100',version:APP_VERSION,exportedAt:new Date().toISOString(),data:state};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`home-crossfit-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Copia exportada. Guárdala en un lugar seguro.');});
